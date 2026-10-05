@@ -2,7 +2,7 @@
 
 Last updated: October 2026
 
-This document describes the VLAN layout, addressing, firewall zone membership, switch port assignments and physical topology of the home network. See `Firewall.md` for policies and `WiFi.md` for SSIDs and authentication.
+This document describes the VLAN layout, addressing, firewall zone membership, switch port assignments and physical topology of the home network.
 
 ---
 
@@ -26,14 +26,14 @@ Logical view:
                             |
                       [ UCG-Fiber ]
                             |
-   +-----------+-----------+-----------+-----------+-----------+
-   |           |           |           |           |           |
-Management   Trusted      WiFi        Guest       DMZ        Black
- VLAN 1      VLAN 10     VLAN 20     VLAN 90    VLAN 40     VLAN 99
-(net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused
+   +-----------+-----------+-----------+-----------+-----------+----------+
+   |           |           |           |           |           |          |
+Management   Trusted      WiFi        Guest       DMZ        Black      Servers
+ VLAN 1      VLAN 10     VLAN 20     VLAN 90    VLAN 40     VLAN 99     VLAN 30
+(net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused     (NAS, AI)
              clients)    clients)               servers)     ports)
 
-Planned:  Servers (VLAN 30)    IoT (VLAN 50)
+Planned: IoT (VLAN 50)
 ```
 
 ---
@@ -45,10 +45,10 @@ Planned:  Servers (VLAN 30)    IoT (VLAN 50)
 | 1 | Management | 192.168.1.0/24 | 192.168.1.1 | Server (small pool) | UCG-Fiber, switch, AP and the admin port only | Active |
 | 10 | Trusted | 192.168.3.0/24 | 192.168.3.1 | Server (.100-.200) | Personal devices (wired, plus Wi-Fi users mapped by RADIUS) | Active |
 | 20 | WiFi | 192.168.4.0/24 | 192.168.4.1 | Server | Wi-Fi clients with minimal rights (internet only) | Active |
+| 30 | Servers | 192.168.7.0/24 | 192.168.7.1 | Server | NAS, AI server | Active |
 | 40 | DMZ | 192.168.5.0/24 | 192.168.5.1 | Server | Internet-exposed game servers | Active VLAN, but planned project |
 | 90 | Guest | 192.168.6.0/24 | 192.168.6.1 | Server | Visitors | Active VLAN, but planned project |
 | 99 | Black | 192.168.2.0/24 | - | **None** | Black hole for unused ports | Active |
-| 30 | Servers | to be assigned | - | Server | NAS, AI server | Planned |
 | 50 | IoT | to be assigned | - | Server | Smart home devices | Planned |
 
 Notes:
@@ -70,9 +70,9 @@ Each network belongs to exactly one firewall zone. Policies between zones are in
 | Guest | Internal (planned: Hotspot) |
 | Trusted | Trusted |
 | WiFi | WiFi |
-| DMZ | DMZ (custom, planned merge into built-in DMZ) |
+| DMZ | DMZ |
 | Black | Black |
-
+| Servers | Servers |
 ---
 
 ## 5. Switch port assignments
@@ -82,6 +82,7 @@ Switch: USW-Flex-2.5G-8-PoE (8 ports).
 | Port | Role | Native network | Tagged networks |
 | --- | --- | --- | --- |
 | 1 | Admin port (plug in only while changing configuration, temporary) | Management | - |
+| 6 | NAS | Servers | - |
 | 7 | Wired client (desktop PC) | Trusted | - |
 | 8 | Access point (U7 Pro XG, PoE) | Management | WiFi (20), Trusted (10) |
 | 9 | Uplink to UCG-Fiber | Management | All (trunk) |
@@ -108,6 +109,7 @@ Rules:
 | WiFi | 192.168.4.1 |
 | DMZ | 192.168.5.1 |
 | Guest | 192.168.6.1 |
+| servers | 192.168.7.1 |
 | Black | none (DHCP off) |
 
 - **IPv6** interface type is set to *None* on all networks.
@@ -116,24 +118,18 @@ Rules:
 
 ---
 
-## 7. Administration access
+## 7. Planned
 
-- The UniFi controller runs on the UCG-Fiber and is reached at `https://192.168.1.1` (uses MFA).
-- Administration is done from **port 1 (Management)**. The admin PC is plugged into port 1 only while changes are made, then moved back to a Trusted port (temporary solution for avoiding lockouts).
-
----
-
-## 8. Planned
-
-- Servers VLAN (30): NAS and AI server
+- Servers VLAN (30): Add AI server
 - IoT VLAN (50): smart home
 - Game servers in the DMZ with port forwarding
 - WireGuard VPN for remote access
 
 ---
 
-## 9. Change log
+## 8 Change log
 
 | Date | Change |
 | --- | --- |
 | 2026-10 | Initial VLAN layout and port plan documented |
+| 2026-10 | Added Servers vlan (30) |
