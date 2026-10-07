@@ -11,11 +11,10 @@ Setup of the Synology DS925+ NAS.
 | Item | Value |
 | --- | --- |
 | Model | Synology DS925+ |
-| Operating system | DiskStation Manager (DSM)|
-| Role | File storage and backup. Docker and VMs are possible later |
-| Network | Servers (VLAN 30), `192.168.7.0/24` |
-| Switch port | Port 6 (native Servers, no tagging) |
-| IP address | TBD (DHCP reservation in the Servers network) |
+| Operating system | DiskStation Manager (DSM) |
+| Role | File storage and backup |
+| Network | Servers (VLAN 30) |
+| IP address | `192.168.7.10` (fixed, set in UniFi) |
 
 ---
 
@@ -23,58 +22,71 @@ Setup of the Synology DS925+ NAS.
 
 | Item | Value |
 | --- | --- |
-| Drives | 2 x 8 TB HDD |
 | RAID type | RAID 1 |
 | File system | Btrfs |
-
-Notes:
-
-- RAID 1 protects against one drive failing. It is not meant for backup. I am planning to add an external drive later (Maybe cloud backups?) for backing up my NAS.
+| Usable capacity | About 7.3 TiB |
+| Volume | Encrypted |
+| Shared folders | `Docs`, `Backup` |
+| Folder settings | Data checksum on, recycle bin on, no quota (all shared folders) |
 
 ---
 
 ## 3. Network access
 
-- DSM is reached at `https://<NAS IP>:5001` from the Trusted network.
-- Synology Assistant does not work across VLANs, so the IP address is used directly.
-- No port forwarding to the NAS and no inbound access from the internet.
-- No Synology Account, QuickConnect and UPnP disabled. Planning to implement WireGuard.
+Enforced by the UniFi firewall and the DSM firewall. There is no port forwarding and no inbound access from the internet.
 
----
-
-## 4. Security hardening (to-do)
-
-- Create a local admin account and disable the default `admin` and `guest` accounts
-- Enable two-factor authentication for the admin account
-- Enable auto block for failed logins
-- Set the minimum SMB version to SMB3 and disable SMB1
-- Disable unused services (FTP, Telnet, and SSH when not needed)
-- Enable automatic DSM security updates
-
----
-
-## 5. Backup and snapshots (to-do)
-
-- **Snapshots:** Btrfs snapshots on shared folders with a retention schedule (TBD).
-- **Backup:** at least one copy on a separate device, with one copy stored offline or off-site (3-2-1 rule).
-
-| Item | Value |
+| Direction | Access |
 | --- | --- |
-| Snapshot schedule | TBD |
-| Backup target | TBD |
-| Last restore test | TBD |
+| Trusted and Management to NAS | TCP 5001 (DSM HTTPS) and TCP 445 (SMB) |
+| NAS to Gateway | DHCP and DNS |
+| NAS to internet | Only Synology domains (`synology.com`) and NTP (`no.pool.ntp.org`, UDP 123), filtered by domain in UniFi |
+| Everything else | Blocked |
+
+---
+
+## 4. Security hardening
+
+**Accounts and login**
+
+- Two accounts: one for daily use and one admin. The default Synology accounts are deactivated.
+- Two-factor authentication (TOTP) enabled for the admin account.
+- Auto block enabled for failed login attempts.
+
+**Services**
+
+- Unused services turned off (such as FTP and Telnet).
+- QuickConnect and UPnP disabled.
+- DSM web interface uses HTTPS only (port 5001).
+- Minimum SMB version set to SMB3.
+- NTP set to `no.pool.ntp.org`.
+
+**Firewall**
+
+- DSM firewall enabled. It allows only the access listed in section 3.
+
+---
+
+## 5. Backup and snapshots
+
+| Folder | Schedule | Protection |
+| --- | --- | --- |
+| Docs | Daily, every 4 hours from 10:00 to 22:00 | Immutable, 7 days |
+| Backup | Weekly, Sunday 12:00 | Immutable, 7 days |
+
+**Planned:** Backup of the NAS to an external drive, possibly also to the cloud.
 
 ---
 
 ## 6. Maintenance
 
-- **Updates:** DSM and package updates uses the website-filtered internet access to Synology domains.
+- **Updates:** DSM and package updates are downloaded through the filtered internet access to Synology domains (see section 3).
 
 ---
-
 
 ## 7. Change log
 
 | Date | Change |
 | --- | --- |
 | 2026-10 | NAS set up with DSM 7.4.1, Btrfs and RAID 1 on the Servers VLAN (30) |
+| 2026-10 | Hardened DSM: 2FA, firewall, SMB3 minimum, NTP via `no.pool.ntp.org`. Fixed IP `192.168.7.10` |
+| 2026-10 | Shared folders `Docs` and `Backup` with immutable snapshots |
