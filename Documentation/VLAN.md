@@ -19,7 +19,6 @@ This document describes the VLAN layout, addressing, firewall zone membership, s
 
 ## 2. Logical view
 
-Logical view:
 
 ```
                          Internet
@@ -30,7 +29,7 @@ Logical view:
    |           |           |           |           |           |          |
 Management   Trusted      WiFi        Guest       DMZ        Black      Servers
  VLAN 1      VLAN 10     VLAN 20     VLAN 90    VLAN 40     VLAN 99     VLAN 30
-(net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused     (NAS, AI)
+(net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused     (NAS)
              clients)    clients)               servers)     ports)
 
 Planned: IoT (VLAN 50)
@@ -45,7 +44,7 @@ Planned: IoT (VLAN 50)
 | 1 | Management | 192.168.1.0/24 | 192.168.1.1 | Server (small pool) | UCG-Fiber, switch, AP and the admin port only | Active |
 | 10 | Trusted | 192.168.3.0/24 | 192.168.3.1 | Server (.100-.200) | Personal devices (wired, plus Wi-Fi users mapped by RADIUS) | Active |
 | 20 | WiFi | 192.168.4.0/24 | 192.168.4.1 | Server | Wi-Fi clients with minimal rights (internet only) | Active |
-| 30 | Servers | 192.168.7.0/24 | 192.168.7.1 | Server | NAS, AI server | Active |
+| 30 | Servers | 192.168.7.0/24 | 192.168.7.1 | Server | NAS | Active |
 | 40 | DMZ | 192.168.5.0/24 | 192.168.5.1 | Server | Internet-exposed game servers | Active VLAN, but planned project |
 | 90 | Guest | 192.168.6.0/24 | 192.168.6.1 | Server | Visitors | Active VLAN, but planned project |
 | 99 | Black | 192.168.2.0/24 | - | **None** | Black hole for unused ports | Active |
@@ -62,17 +61,18 @@ Notes:
 
 ## 4. Zone membership
 
-Each network belongs to exactly one firewall zone. Policies between zones are in `Firewall.md`.
+Each network belongs to exactly one firewall zone. 
 
 | Network | Zone |
 | --- | --- |
 | Management | Internal |
-| Guest | Internal (planned: Hotspot) |
+| Guest | WiFi |
 | Trusted | Trusted |
 | WiFi | WiFi |
 | DMZ | DMZ |
 | Black | Black |
 | Servers | Servers |
+
 ---
 
 ## 5. Switch port assignments
@@ -109,7 +109,7 @@ Rules:
 | WiFi | 192.168.4.1 |
 | DMZ | 192.168.5.1 |
 | Guest | 192.168.6.1 |
-| servers | 192.168.7.1 |
+| Servers | 192.168.7.1 |
 | Black | none (DHCP off) |
 
 - **IPv6** interface type is set to *None* on all networks.
@@ -127,7 +127,7 @@ Rules:
 
 ---
 
-## 8 Change log
+## 8. Change log
 
 | Date | Change |
 | --- | --- |
