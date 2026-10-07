@@ -25,12 +25,12 @@ This document describes the VLAN layout, addressing, firewall zone membership, s
                             |
                       [ UCG-Fiber ]
                             |
-   +-----------+-----------+-----------+-----------+-----------+----------+
-   |           |           |           |           |           |          |
-Management   Trusted      WiFi        Guest       DMZ        Black      Servers
- VLAN 1      VLAN 10     VLAN 20     VLAN 90    VLAN 40     VLAN 99     VLAN 30
-(net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused     (NAS)
-             clients)    clients)               servers)     ports)
+   +-----------+-----------+-----------+-----------+-----------+----------+-----------+
+   |           |           |           |           |           |          |           |
+Management   Trusted      WiFi        Guest       DMZ        Black      Servers      Lab
+ VLAN 1      VLAN 10     VLAN 20     VLAN 90    VLAN 40     VLAN 99     VLAN 30     VLAN 50
+(net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused     (NAS)      (Proxmox
+             clients)    clients)               servers)     ports)                 host)
 
 
 ```
@@ -48,7 +48,8 @@ Management   Trusted      WiFi        Guest       DMZ        Black      Servers
 | 40 | DMZ | 192.168.5.0/24 | 192.168.5.1 | Server | Internet-exposed game servers | Active VLAN, but planned project |
 | 90 | Guest | 192.168.6.0/24 | 192.168.6.1 | Server | Visitors | Active VLAN, but planned project |
 | 99 | Black | 192.168.2.0/24 | - | **None** | Black hole for unused ports | Active |
-| 50 | IoT | to be assigned | - | Server | Smart home devices | Planned |
+| 50 | Lab | 192.168.9.0/24 | 192.168.9.1 | Server | Proxmox host | Active |
+| - | IoT | to be assigned | - | Server | Smart home devices | Planned |
 | - | VPN (OpenVPN) | 192.168.8.0/24 | 192.168.8.1 | OpenVPN server | Remote access clients (SMB to the NAS) | Active |
 
 Notes:
@@ -74,6 +75,7 @@ Each network belongs to exactly one firewall zone.
 | DMZ | DMZ |
 | Black | Black |
 | Servers | Servers |
+| Lab | Lab |
 | OpenVPN network | VPN |
 
 ---
@@ -85,6 +87,7 @@ Switch: USW-Flex-2.5G-8-PoE (8 ports).
 | Port | Role | Native network | Tagged networks |
 | --- | --- | --- | --- |
 | 1 | Admin port (plug in only while changing configuration, temporary) | Management | - |
+| 5 | Proxmox host | Lab | DMZ (40) |
 | 6 | NAS | Servers | - |
 | 7 | Wired client (desktop PC) | Trusted | - |
 | 8 | Access point (U7 Pro XG, PoE) | Management | WiFi (20), Trusted (10) |
@@ -94,7 +97,7 @@ Switch: USW-Flex-2.5G-8-PoE (8 ports).
 Rules:
 
 - No end device is placed on VLAN 1 other than the UniFi gear and the admin port.
-- The AP port uses a custom tagged list, never *Allow All*.
+- The AP port and the Proxmox port use a custom tagged list, never *Allow All*.
 - Every port not listed above is assigned to Black (VLAN 99).
 
 ---
@@ -113,6 +116,7 @@ Rules:
 | DMZ | 192.168.5.1 |
 | Guest | 192.168.6.1 |
 | Servers | 192.168.7.1 |
+| Lab | 192.168.9.1 |
 | Black | none (DHCP off) |
 
 - **IPv6** interface type is set to *None* on all networks.
@@ -124,7 +128,7 @@ Rules:
 ## 7. Planned
 
 - Servers VLAN (30): Add AI server
-- IoT VLAN (50): smart home
+- IoT VLAN (number to be assigned): smart home
 - Game servers in the DMZ with port forwarding
 
 ---
@@ -136,3 +140,4 @@ Rules:
 | 2026-10 | Initial VLAN layout and port plan documented |
 | 2026-10 | Added Servers vlan (30) |
 | 2026-10 | Added OpenVPN network |
+| 2026-10 | Added Lab VLAN (50, 192.168.9.0/24) and port 5 for the Proxmox host |
