@@ -32,35 +32,32 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 
 ## 3. Intended access model
 
-| From \ To | Gateway | External (internet) | Trusted | WiFi | Servers | DMZ | Management | Black |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Trusted | Limited | Allow | - | Block | Limited | Block | Block | Block |
-| Servers | Limited | Limited | Block | Block | - | Block | Block | Block |
-| WiFi | Limited | Allow (filtered) | Block | - | Block | Block | Block | Block |
-| Guest / Hotspot | Limited | Allow (filtered) | Block | Block | Block | Block | Block | Block |
-| DMZ | Limited | Allow (filtered) | Block | Block | Block | - | Block | Block |
-| Management | Allow | Allow (updates) | Block | Block | Block | Block | - | Block |
-| Black | Block | Block | Block | Block | Block | Block | Block | - |
+| From \ To | Internal | External | Gateway | VPN | Hotspot | DMZ | Trusted | Black | WiFi | Servers |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Internal| - | Allow | Allow | Allow | Block | Block | Block | Block | Block | Limited |
+| External | Return only | - | Return only | Return only | Return only | Return only | Return only | Return only | Return only | Return only |
+| Gateway | Allow | Allow | - | Allow | Allow | Allow | Allow | Allow | Allow | Allow |
+| VPN | Allow | Allow | Allow | - | Allow | Allow | Block | Block | Block | Block |
+| Hotspot | Return only | Allow (filtered) | Limited | Return only | - | Block | Block | Block | Block | Block |
+| DMZ | Return only | Allow (filtered) | Limited | Return only | Block | - | Block | Block | Block | Block |
+| Trusted | Block | Allow | Limited | Block | Block | Block | - | Block | Block | Limited |
+| Black | Block | Block | Block | Block | Block | Block | Block | - | Block | Block |
+| WiFi | Block | Allow (filtered) | Limited | Block | Block | Block | Block | Block | - | Block |
+| Servers | Limited | Limited | Limited | Block | Block | Block | Limited | Block | Block | - |
 
-
-Management reaches other zones only through explicit policies when required. Inbound access from the internet is allowed only to the DMZ through port forwards.
-
-
----
-
-## 4. Pending
-
-- Complete Trusted and Black policies (4.2, 4.3)
-- Move Guest to Hotspot or create a custom zone.
-- Policies for IoT (50) when created
-- VPN zone policies for WireGuard
-- IoT zone: internet only, no access to other zones, mDNS/casting rules as needed
+- Allow: All traffic from the source zone to the destination zone is permitted.
+- Allow (filtered): Internet is allowed, but with restrictions such as blocked DNS bypass, blocked private ranges etc.
+- Limited: Only the listed ports or services are allowed. Everything else is blocked.
+- Block: No traffic is allowed.
+- Return only: Only reply traffic for connections the destination zone started is allowed. Nothing can be started from this side.
 
 ---
 
-## 5. Change log
+
+## 4. Change log
 
 | Date | Change |
 | --- | --- |
 | 2026-10 | Upgraded to Zone-Based Firewall. Custom zones for Trusted, WiFi, DMZ and Black. WiFi policies implemented |
 | 2026-10 | Added Servers zone and NAS access policies |
+| 2026-10 | Added Management and Trusted to Servers (TCP 5001, 445). NTP allowed to no.pool.ntp.org |
