@@ -27,23 +27,25 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | WiFi | Custom | WiFi | |
 | Servers | Custom | Servers | NAS |
 | Black | Custom | Black | Blocked from everything |
+| Lab | Custom | Lab | Proxmox host |
 
 ---
 
 ## 3. Intended access model
 
-| From \ To | Internal | External | Gateway | VPN | Hotspot | DMZ | Trusted | Black | WiFi | Servers |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Internal| - | Allow | Allow | Allow | Block | Block | Block | Block | Block | Limited |
-| External | Return only | - | Limited | Return only | Return only | Return only | Return only | Return only | Return only | Return only |
-| Gateway | Allow | Allow | - | Allow | Allow | Allow | Allow | Allow | Allow | Allow |
-| VPN | Block | Allow | Limited | Block | Block | Block | Block | Block | Block | Limited |
-| Hotspot | Return only | Allow (filtered) | Limited | Return only | - | Block | Block | Block | Block | Block |
-| DMZ | Return only | Allow (filtered) | Limited | Return only | Block | - | Block | Block | Block | Block |
-| Trusted | Block | Allow | Limited | Block | Block | Block | - | Block | Block | Limited |
-| Black | Block | Block | Block | Block | Block | Block | Block | - | Block | Block |
-| WiFi | Block | Allow (filtered) | Limited | Block | Block | Block | Block | Block | - | Block |
-| Servers | Limited | Limited | Limited | Block | Block | Block | Limited | Block | Block | - |
+| From \ To | Internal | External | Gateway | VPN | Hotspot | DMZ | Trusted | Black | WiFi | Servers | Lab |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Internal| - | Allow | Allow | Allow | Block | Block | Block | Block | Block | Limited | Block |
+| External | Return only | - | Limited | Return only | Return only | Return only | Return only | Return only | Return only | Return only | Return only |
+| Gateway | Allow | Allow | - | Allow | Allow | Allow | Allow | Allow | Allow | Allow | Allow |
+| VPN | Block | Allow | Limited | Block | Block | Block | Block | Block | Block | Limited | Block |
+| Hotspot | Return only | Allow (filtered) | Limited | Return only | - | Block | Block | Block | Block | Block | Block |
+| DMZ | Return only | Allow (filtered) | Limited | Return only | Block | - | Block | Block | Block | Block | Block |
+| Trusted | Block | Allow | Limited | Block | Block | Block | - | Block | Block | Limited | Limited |
+| Black | Block | Block | Block | Block | Block | Block | Block | - | Block | Block | Block |
+| WiFi | Block | Allow (filtered) | Limited | Block | Block | Block | Block | Block | - | Block | Block |
+| Servers | Limited | Limited | Limited | Block | Block | Block | Limited | Block | Block | - | Block |
+| Lab | Block | Limited | Limited | Block | Block | Block | Block | Block | Block | Limited | - |
 
 - Allow: All traffic from the source zone to the destination zone is permitted.
 - Allow (filtered): Internet is allowed, but with restrictions such as blocked DNS bypass, blocked private ranges etc.
@@ -61,3 +63,4 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | 2026-10 | Added Servers zone and NAS access policies |
 | 2026-10 | Added Management and Trusted to Servers (TCP 5001, 445). NTP allowed to no.pool.ntp.org |
 | 2026-10 | Added VPN zone policies for OpenVPN (SMB only) |
+| 2026-10 | Added Lab zone (VLAN 50) for the Proxmox host |
