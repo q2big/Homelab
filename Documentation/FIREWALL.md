@@ -20,12 +20,12 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | Internal | Built-in | Management, Guest | Guest is planned to move to Hotspot (Not yet decided) |
 | External | Built-in | Internet | WAN |
 | Gateway | Built-in | - | The UCG-Fiber itself |
-| VPN | Built-in | - | Reserved for WireGuard clients |
+| VPN | Built-in | OpenVPN | Remote access clients |
 | Hotspot | Built-in | - | Isolated from other zones, internet only. Planned home of Guest |
 | DMZ | Built-in | - | DMZ |
 | Trusted | Custom | Trusted | |
 | WiFi | Custom | WiFi | |
-| Servers | Custom | Servers | NAS, AI server |
+| Servers | Custom | Servers | NAS |
 | Black | Custom | Black | Blocked from everything |
 
 ---
@@ -35,9 +35,9 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | From \ To | Internal | External | Gateway | VPN | Hotspot | DMZ | Trusted | Black | WiFi | Servers |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Internal| - | Allow | Allow | Allow | Block | Block | Block | Block | Block | Limited |
-| External | Return only | - | Return only | Return only | Return only | Return only | Return only | Return only | Return only | Return only |
+| External | Return only | - | Limited | Return only | Return only | Return only | Return only | Return only | Return only | Return only |
 | Gateway | Allow | Allow | - | Allow | Allow | Allow | Allow | Allow | Allow | Allow |
-| VPN | Allow | Allow | Allow | - | Allow | Allow | Block | Block | Block | Block |
+| VPN | Block | Allow | Limited | Block | Block | Block | Block | Block | Block | Limited |
 | Hotspot | Return only | Allow (filtered) | Limited | Return only | - | Block | Block | Block | Block | Block |
 | DMZ | Return only | Allow (filtered) | Limited | Return only | Block | - | Block | Block | Block | Block |
 | Trusted | Block | Allow | Limited | Block | Block | Block | - | Block | Block | Limited |
@@ -53,7 +53,6 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 
 ---
 
-
 ## 4. Change log
 
 | Date | Change |
@@ -61,3 +60,4 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | 2026-10 | Upgraded to Zone-Based Firewall. Custom zones for Trusted, WiFi, DMZ and Black. WiFi policies implemented |
 | 2026-10 | Added Servers zone and NAS access policies |
 | 2026-10 | Added Management and Trusted to Servers (TCP 5001, 445). NTP allowed to no.pool.ntp.org |
+| 2026-10 | Added VPN zone policies for OpenVPN (SMB only) |
