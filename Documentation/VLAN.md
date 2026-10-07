@@ -32,7 +32,7 @@ Management   Trusted      WiFi        Guest       DMZ        Black      Servers
 (net gear)   (wired      (Wi-Fi      (visitors) (exposed    (unused     (NAS)
              clients)    clients)               servers)     ports)
 
-Planned: IoT (VLAN 50)
+
 ```
 
 ---
@@ -49,12 +49,14 @@ Planned: IoT (VLAN 50)
 | 90 | Guest | 192.168.6.0/24 | 192.168.6.1 | Server | Visitors | Active VLAN, but planned project |
 | 99 | Black | 192.168.2.0/24 | - | **None** | Black hole for unused ports | Active |
 | 50 | IoT | to be assigned | - | Server | Smart home devices | Planned |
+| - | VPN (OpenVPN) | 192.168.8.0/24 | 192.168.8.1 | OpenVPN server | Remote access clients (SMB to the NAS) | Active |
 
 Notes:
 
 - VLAN 1 is the UniFi *Default* network. Its VLAN ID cannot be changed or deleted, so it is used as the management network.
 - Each network uses its own `192.168.x.0/24` subnet.
 - Black (VLAN 99) has DHCP set to *None*, *Allow Internet Access* off, and no gateway access.
+- The VPN subnet `192.168.8.0/24` is not a VLAN. It is the address pool for OpenVPN clients and belongs to the VPN zone. See `OpenVPN.md`.
 - Planned networks get the next free `192.168.x.0/24` subnets when they are created.
 
 ---
@@ -72,6 +74,7 @@ Each network belongs to exactly one firewall zone.
 | DMZ | DMZ |
 | Black | Black |
 | Servers | Servers |
+| OpenVPN network | VPN |
 
 ---
 
@@ -123,7 +126,6 @@ Rules:
 - Servers VLAN (30): Add AI server
 - IoT VLAN (50): smart home
 - Game servers in the DMZ with port forwarding
-- WireGuard VPN for remote access
 
 ---
 
@@ -133,3 +135,4 @@ Rules:
 | --- | --- |
 | 2026-10 | Initial VLAN layout and port plan documented |
 | 2026-10 | Added Servers vlan (30) |
+| 2026-10 | Added OpenVPN network |
