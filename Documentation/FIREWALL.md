@@ -41,7 +41,7 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | VPN | Block | Allow | Limited | Block | Block | Block | Block | Block | Block | Limited | Block |
 | Hotspot | Return only | Allow (filtered) | Limited | Return only | - | Block | Block | Block | Block | Block | Block |
 | DMZ | Return only | Allow (filtered) | Limited | Return only | Block | - | Block | Block | Block | Block | Block |
-| Trusted | Block | Allow | Limited | Block | Block | Block | - | Block | Block | Limited | Limited |
+| Trusted | Block | Allow | Limited | Block | Block | Limited | - | Block | Block | Limited | Limited |
 | Black | Block | Block | Block | Block | Block | Block | Block | - | Block | Block | Block |
 | WiFi | Block | Allow (filtered) | Limited | Block | Block | Block | Block | Block | - | Block | Block |
 | Servers | Limited | Limited | Limited | Block | Block | Block | Limited | Block | Block | - | Block |
@@ -64,3 +64,4 @@ Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
 | 2026-10 | Added Management and Trusted to Servers (TCP 5001, 445). NTP allowed to no.pool.ntp.org |
 | 2026-10 | Added VPN zone policies for OpenVPN (SMB only) |
 | 2026-10 | Added Lab zone (VLAN 50) for the Proxmox host |
+| 2026-10 | Trusted to DMZ limited to Talos API (TCP 50000) and Kubernetes API (TCP 6443) for cluster admin |
