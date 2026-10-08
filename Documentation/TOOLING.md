@@ -10,8 +10,8 @@ All infrastructure tooling runs in a Podman container, so every machine gets the
 |---|---|
 | OpenTofu | Creates the Proxmox VMs and the Talos cluster |
 | talosctl | Talos Linux management API |
-| kubectl | Kubernetes API |
-| Flux CLI | GitOps bootstrap |
+| kubectl | Kubernetes API (not used while Kubernetes is paused) |
+| Flux CLI | GitOps bootstrap (not used while Kubernetes is paused) |
 | SOPS + age | Encrypts secrets stored in Git |
 
 ### Files
@@ -37,5 +37,4 @@ The repository is mounted at `/work` and secrets at `/secrets`. Secrets live out
 
 - `TALOS_VERSION` must match the Talos version of the installed image.
 - On Fedora (SELinux), volumes are mounted with `:Z`.
-- The admin machine must be in the Trusted VLAN, which is allowed to reach the Proxmox API (TCP 8006, 22) and the Talos and Kubernetes APIs in the DMZ (TCP 50000, 6443).
 - Back up `age.key` outside the machine (password manager). Without it, SOPS-encrypted files cannot be decrypted.

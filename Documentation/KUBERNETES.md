@@ -2,7 +2,9 @@
 
 Last updated: October 2026
 
-Talos Linux Kubernetes cluster on Proxmox, used for static websites.
+**Status: Paused (October 2026).** The websites will run on a Docker Compose VM instead, see `WEBSERVER.md`. The config is kept in `infra/talos/` and `clusters/homelab/` for a rebuild.
+
+Talos Linux Kubernetes cluster on Proxmox, used as a learning environment.
 
 ---
 
@@ -123,11 +125,11 @@ The token is only used during bootstrap (to push the Flux manifests and create t
 
 ---
 
-## 6. Planned
+## 6. Paused
 
-- Cilium as CNI, with NetworkPolicies so only Flux can reach GitHub and the websites get no egress.
-- Websites in a separate private repository, deployed by Flux.
-- Cloudflare Tunnel for public access.
+Kubernetes is no longer used for the websites. These ideas are on hold if the cluster is rebuilt for learning:
+
+- Cilium as CNI, with NetworkPolicies so only Flux can reach GitHub.
 
 ---
 
@@ -138,3 +140,4 @@ The token is only used during bootstrap (to push the Flux manifests and create t
 | 2026-10 | Talos VMs (201-203) planned in the DMZ on the Proxmox host |
 | 2026-10 | Cluster bootstrapped (Talos v1.14.2, Kubernetes v1.37.1). NTP set to `no.pool.ntp.org` |
 | 2026-10 | Flux bootstrapped from `clusters/homelab` with a read-only deploy key |
+| 2026-10 | Kubernetes paused. Websites moved to a Docker Compose VM. |

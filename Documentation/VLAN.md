@@ -45,7 +45,7 @@ Management   Trusted      WiFi        Guest       DMZ        Black      Servers 
 | 10 | Trusted | 192.168.3.0/24 | 192.168.3.1 | Server (.100-.200) | Personal devices (wired, plus Wi-Fi users mapped by RADIUS) | Active |
 | 20 | WiFi | 192.168.4.0/24 | 192.168.4.1 | Server | Wi-Fi clients with minimal rights (internet only) | Active |
 | 30 | Servers | 192.168.7.0/24 | 192.168.7.1 | Server | NAS | Active |
-| 40 | DMZ | 192.168.5.0/24 | 192.168.5.1 | Server | Internet-exposed game servers | Active VLAN, but planned project |
+| 40 | DMZ | 192.168.5.0/24 | 192.168.5.1 | Server | Internet-exposed servers/websites | Active |
 | 90 | Guest | 192.168.6.0/24 | 192.168.6.1 | Server | Visitors | Active VLAN, but planned project |
 | 99 | Black | 192.168.2.0/24 | - | **None** | Black hole for unused ports | Active |
 | 50 | Lab | 192.168.9.0/24 | 192.168.9.1 | Server | Proxmox host | Active |
@@ -129,7 +129,6 @@ Rules:
 
 - Servers VLAN (30): Add AI server
 - IoT VLAN (number to be assigned): smart home
-- Game servers in the DMZ with port forwarding
 
 ---
 
