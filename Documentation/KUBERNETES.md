@@ -91,15 +91,53 @@ Notes:
 | --- | --- | --- |
 | Trusted | DMZ | TCP 50000 (Talos API), TCP 6443 (Kubernetes API) |
 | DMZ | External | TCP 80/443 (image pulls, updates), UDP 123 (NTP to `no.pool.ntp.org`) |
+| DMZ | External | TCP 443 to `ssh.github.com` (Flux Git over SSH), `ghcr.io` and `pkg-containers.githubusercontent.com` (Flux images) |
 | DMZ | Gateway | DNS (TCP/UDP 53) and DHCP |
 
 Everything else from the DMZ is blocked, including the NAS and all internal networks.
 
 ---
 
+## 5. GitOps (Flux)
+
+Flux runs in the cluster and keeps it in sync with [`clusters/homelab/`](../clusters/homelab/) in this repository. A change pushed to `main` is applied within a minute.
+
+| Item | Value |
+| --- | --- |
+| Repository | `q2big/Homelab`, branch `main`, path `clusters/homelab` |
+| Access | Read-only deploy key (GitHub > Settings > Deploy keys) |
+| Git transport | SSH over port 443 (`ssh.github.com:443`), so the DMZ needs no port 22 |
+
+Bootstrap (once, with a short-lived fine-grained GitHub token in `~/.config/homelab/env` as `GITHUB_TOKEN`, permissions Contents and Administration read/write on this repo only):
+
+```bash
+tools/run.sh flux bootstrap github \
+  --kubeconfig _out/kubeconfig \
+  --owner=q2big --repository=Homelab --branch=main \
+  --path=clusters/homelab --personal \
+  --ssh-hostname=ssh.github.com:443
+```
+
+The token is only used during bootstrap (to push the Flux manifests and create the deploy key) and is deleted afterwards.
+
+Check status:
+
+```bash
+tools/run.sh flux get sources git --kubeconfig _out/kubeconfig
+tools/run.sh flux get kustomizations --kubeconfig _out/kubeconfig
+```
+
+Notes:
+
+- The Flux manifests in `clusters/homelab/flux-system/` are generated. Do not edit them by hand.
+- The UniFi firewall cannot limit access to one GitHub repo or user (the traffic is encrypted). The deploy key limits Flux to this repo, read-only.
+
+---
+
 ## 6. Planned
 
-- Install Flux and deploy the websites from this repository.
+- Cilium as CNI, with NetworkPolicies so only Flux can reach GitHub and the websites get no egress.
+- Websites in a separate private repository, deployed by Flux.
 - Cloudflare Tunnel for public access.
 
 ---
@@ -109,4 +147,5 @@ Everything else from the DMZ is blocked, including the NAS and all internal netw
 | Date | Change |
 | --- | --- |
 | 2026-10 | Talos VMs (201-203) planned in the DMZ on the Proxmox host |
-| 2026-10 | Cluster bootstrapped (Talos v1.14.2, Kubernetes v1.37.1). NTP set to `no.pool.ntp.org`
+| 2026-10 | Cluster bootstrapped (Talos v1.14.2, Kubernetes v1.37.1). NTP set to `no.pool.ntp.org` |
+| 2026-10 | Flux bootstrapped from `clusters/homelab` with a read-only deploy key |
