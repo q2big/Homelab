@@ -1,143 +1,34 @@
 # Kubernetes
 
-Last updated: October 2026
+Three-node Talos Linux cluster on Proxmox with Flux GitOps, built as a learning environment.
 
-**Status: Paused (October 2026).** The websites will run on a Docker Compose VM instead, see `WEBSERVER.md`. The config is kept in `kubernetes/talos/` and `kubernetes/clusters/homelab/` for a rebuild.
+**Status:** Paused. The VMs are deleted and the websites moved to a simpler Docker Compose setup (see [webserver](../webserver/WEBSERVER.md)). The config in this folder is kept for a rebuild.
 
-Talos Linux Kubernetes cluster on Proxmox, used as a learning environment.
+## Stack
 
----
-
-## 1. Overview
-
-| Item | Value |
-| --- | --- |
-| OS | [Talos Linux](https://www.talos.dev/) (immutable, no SSH or shell, managed through its API) |
-| Host | Proxmox host in the Lab VLAN (50), switch port 5 |
-| Network | DMZ (VLAN 40), tagged on port 5 and on the VLAN-aware bridge `vmbr0` |
-| Exposure | Cloudflare Tunnel only. No inbound port forwarding |
-
-All nodes share the DMZ VLAN because they have the same trust level. Workload isolation is handled inside Kubernetes (namespaces and NetworkPolicies).
-
----
-
-## 2. Nodes
-
-| VM ID | Name | Role | RAM | vCPU | Disk | IP (UniFi reservation) |
-| --- | --- | --- | --- | --- | --- | --- |
-| 201 | `talos-cp1` | Control plane | 2 GB | 2 | 16 GB | 192.168.5.11 |
-| 202 | `talos-w1` | Worker | 1.5 GB | 1 | 16 GB | 192.168.5.12 |
-| 203 | `talos-w2` | Worker | 1.5 GB | 1 | 16 GB | 192.168.5.13 |
-
-Sized at the Talos minimum. Disks are thin-provisioned and can be grown later in Proxmox.
-
----
-
-## 3. Setup
-
-**1. Talos image** ([Image Factory](https://factory.talos.dev/))
-
-| Setting | Value |
-| --- | --- |
-| Hardware type | Cloud Server > Nocloud |
-| Architecture | amd64 |
-| System extension | `siderolabs/qemu-guest-agent` |
-
-**2. VMs**
-
-Run [`kubernetes/scripts/create-talos-vms.sh`](scripts/create-talos-vms.sh) in the Proxmox shell:
-
-```bash
-./create-talos-vms.sh <talos-iso-filename>
-```
-
-It creates the three VMs on VLAN 40 with the guest agent enabled and start on boot. Existing VMs are skipped. Could be replaced by OpenTofu.
-
-**3. Fixed IPs**
-
-Each node boots into Talos maintenance mode and shows its DHCP address on the console. Set the fixed IPs from section 2 in UniFi (Clients) and reboot the VMs.
-
-**4. Cluster config and bootstrap**
-
-[`kubernetes/talos/patch.yaml`](talos/patch.yaml) sets the Image Factory installer (keeps the guest agent after install), the install disk `/dev/sda`, and NTP to `no.pool.ntp.org` without NTS. Run from the repo root in a host terminal:
-
-```bash
-tools/run.sh talosctl gen secrets -o /secrets/secrets.yaml   # once
-tools/run.sh talosctl gen config homelab https://192.168.5.11:6443 \
-  --with-secrets /secrets/secrets.yaml \
-  --config-patch @kubernetes/talos/patch.yaml \
-  --output _out
-tools/run.sh talosctl apply-config --insecure -n 192.168.5.11 -f _out/controlplane.yaml
-tools/run.sh talosctl apply-config --insecure -n 192.168.5.12 -f _out/worker.yaml
-tools/run.sh talosctl apply-config --insecure -n 192.168.5.13 -f _out/worker.yaml
-
-T="--talosconfig _out/talosconfig"
-tools/run.sh talosctl $T config endpoint 192.168.5.11
-tools/run.sh talosctl $T config node 192.168.5.11
-tools/run.sh talosctl $T bootstrap                            # once
-tools/run.sh talosctl $T kubeconfig _out/kubeconfig
-tools/run.sh kubectl --kubeconfig _out/kubeconfig get nodes
-```
-
-`secrets.yaml` is stored in `~/.config/homelab/`. `talosconfig` and `kubeconfig` are in `_out/` (ignored by Git). Back up all three in the password manager.
-
-Notes:
-
-- Talos 1.14 uses the `UnattendedInstallConfig` document. Patching `machine.install` fails with "incompatible with v1alpha1 config".
-
----
-
-## 4. Firewall
-
-| From | To | Allowed |
+| Part | Choice | Why |
 | --- | --- | --- |
-| Trusted | DMZ | TCP 50000 (Talos API), TCP 6443 (Kubernetes API) |
-| DMZ | External | TCP 80/443 (image pulls, updates), UDP 123 (NTP to `no.pool.ntp.org`) |
-| DMZ | External | TCP 443 to `ssh.github.com` (Flux Git over SSH), `ghcr.io` and `pkg-containers.githubusercontent.com` (Flux images) |
-| DMZ | Gateway | DNS (TCP/UDP 53) and DHCP |
+| OS | [Talos Linux](https://www.talos.dev/) | Immutable and minimal, no SSH or shell, managed only through an authenticated API |
+| Nodes | 1 control plane, 2 workers | Smallest setup that still shows scheduling across nodes |
+| Network | DMZ | Same trust level for all nodes, isolated from internal networks |
+| GitOps | Flux | The cluster follows this repository. A push to `main` is applied automatically |
+| Tooling | Podman toolbox (see [tools](../tools/TOOLING.md)) | Pinned versions of talosctl, kubectl and Flux |
 
-Everything else from the DMZ is blocked, including the NAS and all internal networks.
+## What I did
 
----
+- Built a custom Talos image with Image Factory (QEMU guest agent extension).
+- Created the VMs with a script ([`scripts/create-talos-vms.sh`](scripts/create-talos-vms.sh)) on a VLAN-aware Proxmox bridge.
+- Generated the cluster config with a patch ([`talos/patch.yaml`](talos/patch.yaml)) for the installer image, the install disk and NTP.
+- Bootstrapped etcd and the control plane, and joined the workers.
+- Bootstrapped Flux from [`clusters/homelab/`](clusters/homelab/) with a **read-only deploy key**. The GitHub token was short-lived and limited to this repository.
+- Limited admin access to Trusted, and DMZ egress to the domains the cluster needs.
 
-## 5. GitOps (Flux)
+## Lessons learned
 
-Flux runs in the cluster and keeps it in sync with [`kubernetes/clusters/homelab/`](clusters/homelab/) in this repository. A change pushed to `main` is applied within a minute.
+- **Talos 1.14 changed the config format.** Install settings moved to a separate `UnattendedInstallConfig` document, so older guides fail.
+- **Time sync blocks the boot.** Talos uses NTS (encrypted NTP) by default. The firewall blocked it, so etcd never started. Switching to plain NTP against an allowed server fixed it. The logs (`talosctl dmesg`) showed the cause right away.
+- **A firewall cannot filter per repository.** Git traffic is encrypted, so UniFi only sees the domain. Access to one repo is limited by the deploy key, and per-workload egress would need NetworkPolicies.
 
-| Item | Value |
-| --- | --- |
-| Repository | `q2big/Homelab`, branch `main`, path `kubernetes/clusters/homelab` |
-| Access | Read-only deploy key (GitHub > Settings > Deploy keys) |
-| Git transport | SSH over port 443 (`ssh.github.com:443`), so the DMZ needs no port 22 |
+## Ideas for a rebuild
 
-Bootstrap (once, with a short-lived fine-grained GitHub token in `~/.config/homelab/env` as `GITHUB_TOKEN`, permissions Contents and Administration read/write on this repo only):
-
-```bash
-tools/run.sh flux bootstrap github \
-  --kubeconfig _out/kubeconfig \
-  --owner=q2big --repository=Homelab --branch=main \
-  --path=kubernetes/clusters/homelab --personal \
-  --ssh-hostname=ssh.github.com:443
-```
-
-The token is only used during bootstrap (to push the Flux manifests and create the deploy key) and is deleted afterwards.
-
-
----
-
-## 6. Paused
-
-Kubernetes is no longer used for the websites. These ideas are on hold if the cluster is rebuilt for learning:
-
-- Cilium as CNI, with NetworkPolicies so only Flux can reach GitHub.
-
----
-
-## 7. Change log
-
-| Date | Change |
-| --- | --- |
-| 2026-10 | Talos VMs (201-203) planned in the DMZ on the Proxmox host |
-| 2026-10 | Cluster bootstrapped (Talos v1.14.2, Kubernetes v1.37.1). NTP set to `no.pool.ntp.org` |
-| 2026-10 | Flux bootstrapped from `clusters/homelab` with a read-only deploy key |
-| 2026-10 | Kubernetes paused. Websites moved to a Docker Compose VM. |
+- Cilium as CNI, so NetworkPolicies are enforced (Flannel ignores them).

@@ -1,56 +1,19 @@
 # OpenVPN
 
-Last updated: October 2026
-
 Remote access to the NAS through the OpenVPN server on the UCG-Fiber.
 
----
+## Design
 
-## 1. Overview
+- VPN clients get their own address pool and firewall zone.
+- The only thing they can reach internally is file sharing (SMB) on the NAS. The NAS admin interface and all other networks are blocked.
+- VPN clients cannot reach each other (client isolation).
+- The VPN port is the only port open on the WAN. There is no port forwarding to internal networks.
 
-| Item | Value |
-| --- | --- |
-| Purpose | SMB access to the NAS (`192.168.7.10`) from outside the home network |
-| Server | OpenVPN server on the UCG-Fiber |
-| Zone | VPN |
-| Client subnet | `192.168.8.0/24` (not a VLAN) |
-| Allowed access | TCP 445 (SMB) to the NAS, DNS to the gateway, internet |
+## Users
 
----
+One user per device, so a lost device can be revoked without affecting the others.
 
-## 2. Server settings
+## Security notes
 
-| Setting | Value |
-| --- | --- |
-| Type | OpenVPN |
-| Port | 1194 |
-| Protocol | UDP |
-
----
-
-## 3. Address
-
-Clients reach home through the WAN IP configured in UniFi.
-
----
-
-## 4. Users
-
-One user per device, so a single device can be revoked without affecting the others.
-
----
-
-## 10. Security notes
-
-- The `.ovpn` file is sensitive. Delete it from the device after import.
-- Right now all traffic goes through the VPN when its enabled, not only traffic to the NAS.
-- VPN → VPN is blocked, so VPN clients cannot reach each other.
-- No port forwarding to internal networks. Only UDP 1194 is open on the WAN.
-
----
-
-## 11. Change log
-
-| Date | Change |
-| --- | --- |
-| 2026-10 | OpenVPN server on the UCG-Fiber with user for Mac. SMB-only access to the NAS |
+- The `.ovpn` profile is sensitive and is deleted from the device after import.
+- Currently full tunnel: all traffic goes through the VPN while connected.

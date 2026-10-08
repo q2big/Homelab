@@ -1,67 +1,48 @@
 # Firewall
 
-Last updated: October 2026
+Zone-based firewall (UniFi ZBF) on the UCG-Fiber.
 
-Firewall design for the UCG-Fiber using UniFi Zone-Based Firewall (ZBF).
-
----
-
-## 1. Principles
+## Principles
 
 - **Default deny between zones.** Custom zones block traffic to all other zones until a policy allows it.
-- **Least privilege.** Each zone gets only the access it needs.
+- **Least privilege.** Each zone gets only the specific services it needs.
+- **No inbound port forwarding** to internal networks. Remote access goes through VPN.
+- **Domain-filtered egress** for servers, so they can reach only the services they need (updates, time).
 
----
+## Zones
 
-## 2. Zones
+| Zone | Networks | Purpose |
+| --- | --- | --- |
+| Internal | Management | Network gear |
+| Trusted | Trusted | Personal devices, admin access |
+| WiFi | WiFi | Internet only |
+| Servers | Servers | NAS |
+| DMZ | DMZ | Internet-exposed websites |
+| Lab | Lab | Proxmox host |
+| VPN | OpenVPN | Remote access to the NAS |
+| Black | Black | Blocked from everything |
+| Hotspot | - | Isolated, internet only. Planned home of Guest |
 
-| Zone | Type | Networks | Notes |
-| --- | --- | --- | --- |
-| Internal | Built-in | Management, Guest | Guest is planned to move to Hotspot (Not yet decided) |
-| External | Built-in | Internet | WAN |
-| Gateway | Built-in | - | The UCG-Fiber itself |
-| VPN | Built-in | OpenVPN | Remote access clients |
-| Hotspot | Built-in | - | Isolated from other zones, internet only. Planned home of Guest |
-| DMZ | Built-in | - | DMZ |
-| Trusted | Custom | Trusted | |
-| WiFi | Custom | WiFi | |
-| Servers | Custom | Servers | NAS |
-| Black | Custom | Black | Blocked from everything |
-| Lab | Custom | Lab | Proxmox host |
+## Access model
 
----
+| From \ To | Internal | External | Gateway | VPN | DMZ | Trusted | WiFi | Servers | Lab |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Internal | - | Allow | Allow | Allow | Block | Block | Block | Limited | Block |
+| Trusted | Block | Allow | Limited | Block | Limited | - | Block | Limited | Limited |
+| WiFi | Block | Filtered | Limited | Block | Block | Block | - | Block | Block |
+| VPN | Block | Allow | Limited | Block | Block | Block | Block | Limited | Block |
+| Servers | Limited | Limited | Limited | Block | Block | Limited | Block | - | Block |
+| DMZ | Block | Filtered | Limited | Block | - | Block | Block | Block | Block |
+| Lab | Block | Limited | Limited | Block | Block | Block | Block | Limited | - |
+| Black | Block | Block | Block | Block | Block | Block | Block | Block | Block |
 
-## 3. Intended access model
+- **Allow:** all traffic permitted.
+- **Filtered:** internet allowed, with restrictions such as blocked DNS bypass and private ranges.
+- **Limited:** only specific services, everything else blocked.
+- **Block:** no traffic. Reply traffic for c
+onnections started from the other side is always allowed.
+Highlights:
 
-| From \ To | Internal | External | Gateway | VPN | Hotspot | DMZ | Trusted | Black | WiFi | Servers | Lab |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Internal| - | Allow | Allow | Allow | Block | Block | Block | Block | Block | Limited | Block |
-| External | Return only | - | Limited | Return only | Return only | Return only | Return only | Return only | Return only | Return only | Return only |
-| Gateway | Allow | Allow | - | Allow | Allow | Allow | Allow | Allow | Allow | Allow | Allow |
-| VPN | Block | Allow | Limited | Block | Block | Block | Block | Block | Block | Limited | Block |
-| Hotspot | Return only | Allow (filtered) | Limited | Return only | - | Block | Block | Block | Block | Block | Block |
-| DMZ | Return only | Allow (filtered) | Limited | Return only | Block | - | Block | Block | Block | Block | Block |
-| Trusted | Block | Allow | Limited | Block | Block | Limited | - | Block | Block | Limited | Limited |
-| Black | Block | Block | Block | Block | Block | Block | Block | - | Block | Block | Block |
-| WiFi | Block | Allow (filtered) | Limited | Block | Block | Block | Block | Block | - | Block | Block |
-| Servers | Limited | Limited | Limited | Block | Block | Block | Limited | Block | Block | - | Block |
-| Lab | Block | Limited | Limited | Block | Block | Block | Block | Block | Block | Limited | - |
-
-- Allow: All traffic from the source zone to the destination zone is permitted.
-- Allow (filtered): Internet is allowed, but with restrictions such as blocked DNS bypass, blocked private ranges etc.
-- Limited: Only the listed ports or services are allowed. Everything else is blocked.
-- Block: No traffic is allowed.
-- Return only: Only reply traffic for connections the destination zone started is allowed. Nothing can be started from this side.
-
----
-
-## 4. Change log
-
-| Date | Change |
-| --- | --- |
-| 2026-10 | Upgraded to Zone-Based Firewall. Custom zones for Trusted, WiFi, DMZ and Black. WiFi policies implemented |
-| 2026-10 | Added Servers zone and NAS access policies |
-| 2026-10 | Added Management and Trusted to Servers (TCP 5001, 445). NTP allowed to no.pool.ntp.org |
-| 2026-10 | Added VPN zone policies for OpenVPN (SMB only) |
-| 2026-10 | Added Lab zone (VLAN 50) for the Proxmox host |
-| 2026-10 | Trusted to DMZ limited to Talos API (TCP 50000) and Kubernetes API (TCP 6443) for cluster admin |
+- The DMZ cannot reach any internal network, so a compromised website cannot reach the NAS or personal devices.
+- VPN clients reach only file sharing on the NAS, and cannot reach each other.
+- Admin access to the Proxmox host and the DMZ is only possible from Trusted.

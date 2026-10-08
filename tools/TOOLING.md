@@ -1,29 +1,25 @@
 # Tooling
 
-Last updated: October 2026
-
-## Admin toolbox (Podman)
-
-All infrastructure tooling runs in a Podman container, so every machine gets the same pinned tool versions and nothing is installed on the host except Podman.
+All infrastructure tooling runs in a Podman container. Every machine gets the same pinned versions, and nothing is installed on the host except Podman.
 
 | Tool | Purpose |
-|---|---|
-| OpenTofu | Creates the Proxmox VMs and the Talos cluster |
-| talosctl | Talos Linux management API |
-| kubectl | Kubernetes API (not used while Kubernetes is paused) |
-| Flux CLI | GitOps bootstrap (not used while Kubernetes is paused) |
-| SOPS + age | Encrypts secrets stored in Git |
+| --- | --- |
+| OpenTofu | Infrastructure as code |
+| talosctl | Talos Linux API |
+| kubectl | Kubernetes API |
+| Flux CLI | GitOps bootstrap |
+| SOPS + age | Encrypted secrets in Git |
 
-### Files
+## Files
 
 | File | Purpose |
-|---|---|
-| `tools/versions.env` | Pinned tool versions |
-| `tools/Containerfile` | Image definition |
-| `tools/build.sh` | Builds the image from `versions.env` |
-| `tools/run.sh` | Runs a command in the container |
+| --- | --- |
+| `versions.env` | Pinned tool versions |
+| `Containerfile` | Image definition (Debian slim) |
+| `build.sh` | Builds the image from `versions.env` |
+| `run.sh` | Runs a command in the container |
 
-### Usage
+## Usage
 
 ```bash
 tools/build.sh          # build or rebuild after changing versions
@@ -31,10 +27,8 @@ tools/run.sh tofu plan  # run any tool in the container
 tools/run.sh            # interactive shell
 ```
 
-The repository is mounted at `/work` and secrets at `/secrets`. Secrets live outside the repository in `~/.config/homelab/` (age key and an `env` file for API tokens) and are never committed.
+## Design
 
-### Notes
-
-- `TALOS_VERSION` must match the Talos version of the installed image.
-- On Fedora (SELinux), volumes are mounted with `:Z`.
-- Back up `age.key` outside the machine (password manager). Without it, SOPS-encrypted files cannot be decrypted.
+- The repository is mounted into the container. Secrets are mounted from a folder outside the repository and are never committed.
+- Files created in the container are owned by my user (`--userns=keep-id`), and volumes work with SELinux on Fedora (`:Z`).
+- `.gitignore` keeps Terraform state, cluster configs and keys out of Git.
