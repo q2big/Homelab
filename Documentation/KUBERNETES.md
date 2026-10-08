@@ -120,17 +120,6 @@ tools/run.sh flux bootstrap github \
 
 The token is only used during bootstrap (to push the Flux manifests and create the deploy key) and is deleted afterwards.
 
-Check status:
-
-```bash
-tools/run.sh flux get sources git --kubeconfig _out/kubeconfig
-tools/run.sh flux get kustomizations --kubeconfig _out/kubeconfig
-```
-
-Notes:
-
-- The Flux manifests in `clusters/homelab/flux-system/` are generated. Do not edit them by hand.
-- The UniFi firewall cannot limit access to one GitHub repo or user (the traffic is encrypted). The deploy key limits Flux to this repo, read-only.
 
 ---
 
