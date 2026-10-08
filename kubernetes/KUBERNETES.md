@@ -2,7 +2,7 @@
 
 Last updated: October 2026
 
-**Status: Paused (October 2026).** The websites will run on a Docker Compose VM instead, see `WEBSERVER.md`. The config is kept in `infra/talos/` and `clusters/homelab/` for a rebuild.
+**Status: Paused (October 2026).** The websites will run on a Docker Compose VM instead, see `WEBSERVER.md`. The config is kept in `kubernetes/talos/` and `kubernetes/clusters/homelab/` for a rebuild.
 
 Talos Linux Kubernetes cluster on Proxmox, used as a learning environment.
 
@@ -45,13 +45,13 @@ Sized at the Talos minimum. Disks are thin-provisioned and can be grown later in
 
 **2. VMs**
 
-Run [`infra/scripts/create-talos-vms.sh`](../infra/scripts/create-talos-vms.sh) in the Proxmox shell:
+Run [`kubernetes/scripts/create-talos-vms.sh`](scripts/create-talos-vms.sh) in the Proxmox shell:
 
 ```bash
 ./create-talos-vms.sh <talos-iso-filename>
 ```
 
-It creates the three VMs on VLAN 40 with the guest agent enabled and start on boot. Existing VMs are skipped. To be replaced by OpenTofu in `infra/`.
+It creates the three VMs on VLAN 40 with the guest agent enabled and start on boot. Existing VMs are skipped. Could be replaced by OpenTofu.
 
 **3. Fixed IPs**
 
@@ -59,13 +59,13 @@ Each node boots into Talos maintenance mode and shows its DHCP address on the co
 
 **4. Cluster config and bootstrap**
 
-[`infra/talos/patch.yaml`](../infra/talos/patch.yaml) sets the Image Factory installer (keeps the guest agent after install), the install disk `/dev/sda`, and NTP to `no.pool.ntp.org` without NTS. Run from the repo root in a host terminal:
+[`kubernetes/talos/patch.yaml`](talos/patch.yaml) sets the Image Factory installer (keeps the guest agent after install), the install disk `/dev/sda`, and NTP to `no.pool.ntp.org` without NTS. Run from the repo root in a host terminal:
 
 ```bash
 tools/run.sh talosctl gen secrets -o /secrets/secrets.yaml   # once
 tools/run.sh talosctl gen config homelab https://192.168.5.11:6443 \
   --with-secrets /secrets/secrets.yaml \
-  --config-patch @infra/talos/patch.yaml \
+  --config-patch @kubernetes/talos/patch.yaml \
   --output _out
 tools/run.sh talosctl apply-config --insecure -n 192.168.5.11 -f _out/controlplane.yaml
 tools/run.sh talosctl apply-config --insecure -n 192.168.5.12 -f _out/worker.yaml
@@ -102,11 +102,11 @@ Everything else from the DMZ is blocked, including the NAS and all internal netw
 
 ## 5. GitOps (Flux)
 
-Flux runs in the cluster and keeps it in sync with [`clusters/homelab/`](../clusters/homelab/) in this repository. A change pushed to `main` is applied within a minute.
+Flux runs in the cluster and keeps it in sync with [`kubernetes/clusters/homelab/`](clusters/homelab/) in this repository. A change pushed to `main` is applied within a minute.
 
 | Item | Value |
 | --- | --- |
-| Repository | `q2big/Homelab`, branch `main`, path `clusters/homelab` |
+| Repository | `q2big/Homelab`, branch `main`, path `kubernetes/clusters/homelab` |
 | Access | Read-only deploy key (GitHub > Settings > Deploy keys) |
 | Git transport | SSH over port 443 (`ssh.github.com:443`), so the DMZ needs no port 22 |
 
@@ -116,7 +116,7 @@ Bootstrap (once, with a short-lived fine-grained GitHub token in `~/.config/home
 tools/run.sh flux bootstrap github \
   --kubeconfig _out/kubeconfig \
   --owner=q2big --repository=Homelab --branch=main \
-  --path=clusters/homelab --personal \
+  --path=kubernetes/clusters/homelab --personal \
   --ssh-hostname=ssh.github.com:443
 ```
 
