@@ -1,0 +1,107 @@
+#cloud-config
+hostname: minecraft
+manage_etc_hosts: true
+
+users:
+  - name: minecraft
+    uid: 1000
+    shell: /bin/bash
+    lock_passwd: false
+    passwd: '$6$vEJL0Xejj6uWwkfb$Uch/LXw9tMXcNZxJ/5JHIDyTFPNybfZhv3DSQolwkszAXdriLGswNkpt5dYAcBh8yifCTCAQj8p9ttiAQvonC0'
+    sudo: ALL=(ALL) ALL
+
+ssh_pwauth: false
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - docker.io
+  - docker-compose
+
+mounts:
+  - [ mcworlds, /srv/mcdata, virtiofs, "defaults,nofail", "0", "0" ]
+
+write_files:
+  - path: /opt/minecraft/.env
+    permissions: '0600'
+    content: |
+      # ===== PROFILE: enable ONE of them =====
+
+      # --- Vanilla / Paper ---
+      MC_PROFILE=vanilla
+      MC_IMAGE=latest
+      MC_TYPE=PAPER
+      MC_VERSION=LATEST
+      MC_MEMORY=3G
+      MC_MEM_LIMIT=4g
+      CF_PAGE_URL=
+      CF_API_KEY=
+
+      # --- Modded (CurseForge modpack) ---
+      #MC_PROFILE=modded
+      #MC_IMAGE=java21
+      #MC_TYPE=AUTO_CURSEFORGE
+      #MC_VERSION=
+      #MC_MEMORY=6G
+      #MC_MEM_LIMIT=7g
+      #CF_PAGE_URL=https://www.curseforge.com/minecraft/modpacks/<pack>
+      #CF_API_KEY=<your-curseforge-api-key>
+
+  - path: /opt/minecraft/docker-compose.yml
+    content: |
+      services:
+        mc:
+          image: itzg/minecraft-server:${MC_IMAGE}
+          container_name: minecraft
+          user: "1000:1000"
+          restart: unless-stopped
+          stdin_open: true
+          tty: true
+          ports:
+            - "25565:25565"
+          environment:
+            EULA: "TRUE"
+            TYPE: "${MC_TYPE}"
+            VERSION: "${MC_VERSION}"
+            CF_PAGE_URL: "${CF_PAGE_URL}"
+            CF_API_KEY: "${CF_API_KEY}"
+            MEMORY: "${MC_MEMORY}"
+            ONLINE_MODE: "TRUE"
+            ENABLE_WHITELIST: "TRUE"
+            ENFORCE_WHITELIST: "TRUE"
+            WHITELIST: "q2big"
+            OPS: "q2big"
+            ENABLE_RCON: "FALSE"
+            ENABLE_QUERY: "FALSE"
+            MAX_PLAYERS: "10"
+            VIEW_DISTANCE: "10"
+            MOTD: ":P"
+          volumes:
+            - /srv/mcdata/${MC_PROFILE}:/data
+          security_opt:
+            - no-new-privileges:true
+          cap_drop:
+            - ALL
+          mem_limit: ${MC_MEM_LIMIT}
+          pids_limit: 512
+          stop_grace_period: 60s
+
+  - path: /etc/cron.d/minecraft-update
+    permissions: '0644'
+    content: |
+      0 5 * * 1 root cd /opt/minecraft && docker-compose pull && docker-compose up -d
+      
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - systemctl disable --now ssh
+  - install -d -o 1000 -g 1000 /opt/minecraft/data
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 25565/tcp
+  - ufw logging off
+  - ufw --force enable
+  - mount -a
+  - mountpoint -q /srv/mcdata && install -d -o 1000 -g 1000 /srv/mcdata/vanilla /srv/mcdata/modded && cd /opt/minecraft && docker-compose up -d
