@@ -39,10 +39,10 @@ Zone-based firewall (UniFi ZBF) on the UCG-Fiber.
 - **Allow:** all traffic permitted.
 - **Filtered:** internet allowed, with restrictions such as blocked DNS bypass and private ranges.
 - **Limited:** only specific services, everything else blocked.
-- **Block:** no traffic. Reply traffic for c
-onnections started from the other side is always allowed.
+- **Block:** no traffic. Reply traffic for connections started from the other side is always allowed.
+
 Highlights:
 
 - The DMZ cannot reach any internal network, so a compromised website cannot reach the NAS or personal devices.
 - VPN clients reach only file sharing on the NAS, and cannot reach each other.
-- Admin access to the Proxmox host and the DMZ is only possible from Trusted.
+- Admin access to the Proxmox host and the DMZ, including the game server panel, is only possible from Trusted.

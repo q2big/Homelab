@@ -35,7 +35,7 @@ Management   Trusted      WiFi        Guest       DMZ        Servers      Lab   
 | Trusted | Personal devices (wired, and Wi-Fi users mapped by RADIUS) | Active |
 | WiFi | Wi-Fi clients with minimal rights (internet only) | Active |
 | Servers | NAS | Active |
-| DMZ | Internet-exposed websites | Active |
+| DMZ | Websites and game servers | Active |
 | Lab | Proxmox host | Active |
 | Guest | Visitors | VLAN created, not in use yet |
 | Black | Black hole for unused ports | Active |
