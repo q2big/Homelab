@@ -1,0 +1,42 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN in .env}
+    networks: [edge, internal]
+    depends_on: [web]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  web:
+    image: nginxinc/nginx-unprivileged:1.30-alpine
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    tmpfs: [/tmp]
+    networks: [internal]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  parked:
+    image: nginxinc/nginx-unprivileged:1.30-alpine
+    volumes:
+      - ./parked:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    tmpfs: [/tmp]
+    networks: [internal]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+
+networks:
+  edge: {}
+  internal:
+    internal: true
