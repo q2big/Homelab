@@ -1,0 +1,29 @@
+# Jellyfin media server on a dedicated Ubuntu VM (Media VLAN 60).
+#
+# - Media library comes from the NAS over NFS (read-only). The share root is mounted on the
+#   host at /mnt/jellyfin, and only its media/ folder is passed to the container.
+# - Config and cache live on the VM disk and are covered by the Proxmox VM backup.
+# - Reachable from Trusted and VPN only (enforced in UniFi). Never exposed to the internet.
+# - Runs as an unprivileged user whose UID matches the "jellyfin" user on the NAS,
+#   so NFS permissions on the NAS apply.
+
+services:
+  jellyfin:
+    # Pin the version. Check the tag on Docker Hub and read the release notes before upgrading.
+    image: jellyfin/jellyfin:12.2
+    container_name: jellyfin
+    # Same UID as the "jellyfin" user on the NAS (`id jellyfin` on the NAS), GID 100 = users.
+    user: "1030:100"
+    ports:
+      - "192.168.60.10:8096:8096"
+    volumes:
+      - /opt/jellyfin/config:/config
+      - /opt/jellyfin/cache:/cache
+      - /mnt/jellyfin/media:/media:ro
+    environment:
+      - TZ=Europe/Oslo
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
