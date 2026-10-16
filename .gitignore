@@ -6,3 +6,5 @@ talosconfig
 *.key
 _out/
 secrets.yaml
+.env
+traefik/acme/

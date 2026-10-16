@@ -1,29 +1,69 @@
-# Jellyfin media server on a dedicated Ubuntu VM (Media VLAN 60).
-#
-# - Media library comes from the NAS over NFS (read-only). The share root is mounted on the
-#   host at /mnt/jellyfin, and only its media/ folder is passed to the container.
-# - Config and cache live on the VM disk and are covered by the Proxmox VM backup.
-# - Reachable from Trusted and VPN only (enforced in UniFi). Never exposed to the internet.
-# - Runs as an unprivileged user whose UID matches the "jellyfin" user on the NAS,
-#   so NFS permissions on the NAS apply.
+# Jellyfin behind Traefik on a dedicated VM in the Media VLAN.
+# All addresses, IDs, the domain and the DNS API token come from .env (never committed).
 
 services:
+  traefik:
+    # Pin the version. Check the tag on Docker Hub before upgrading.
+    image: traefik:v3.7
+    container_name: traefik
+    user: "${TRAEFIK_UID}:${TRAEFIK_UID}"
+    command:
+      - --global.checknewversion=false
+      - --global.sendanonymoususage=false
+      - --log.level=INFO
+      - --accesslog=true
+      - --entrypoints.websecure.address=:8443
+      - --entrypoints.websecure.http.tls.certresolver=le
+      - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
+      - --providers.file.filename=/etc/traefik/dynamic.yaml
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/acme/acme.json
+      - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare
+      # Outbound DNS is only allowed to the gateway.
+      - --certificatesresolvers.le.acme.dnschallenge.resolvers=${GATEWAY_IP}:53
+      - --certificatesresolvers.le.acme.dnschallenge.propagation.disableanschecks=true
+      - --certificatesresolvers.le.acme.dnschallenge.propagation.delaybeforechecks=30s
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - DOMAIN=${DOMAIN}
+    ports:
+      - "${VM_IP}:443:8443"
+    volumes:
+      - ./traefik/dynamic.yaml:/etc/traefik/dynamic.yaml:ro
+      - ./traefik/acme:/acme
+    networks:
+      jellyfin:
+        # Fixed so Jellyfin can trust it as a known proxy.
+        ipv4_address: ${TRAEFIK_IP}
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
   jellyfin:
-    # Pin the version. Check the tag on Docker Hub and read the release notes before upgrading.
+    # Pin the version. Read the release notes before upgrading.
     image: jellyfin/jellyfin:12.2
     container_name: jellyfin
-    # Same UID as the "jellyfin" user on the NAS (`id jellyfin` on the NAS), GID 100 = users.
-    user: "1030:100"
-    ports:
-      - "192.168.60.10:8096:8096"
+    # Same UID as the "jellyfin" user on the NAS, so NFS permissions apply.
+    user: "${JELLYFIN_UID}:${JELLYFIN_GID}"
     volumes:
       - /opt/jellyfin/config:/config
       - /opt/jellyfin/cache:/cache
       - /mnt/jellyfin/media:/media:ro
     environment:
       - TZ=Europe/Oslo
+    networks:
+      - jellyfin
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     restart: unless-stopped
+
+networks:
+  jellyfin:
+    ipam:
+      config:
+        - subnet: ${DOCKER_SUBNET}

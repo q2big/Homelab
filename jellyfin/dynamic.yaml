@@ -1,0 +1,31 @@
+# Traefik dynamic configuration (file provider). DOMAIN comes from the container environment.
+
+http:
+  routers:
+    jellyfin:
+      rule: Host(`{{ env "DOMAIN" }}`)
+      entryPoints:
+        - websecure
+      service: jellyfin
+      middlewares:
+        - security-headers
+      tls:
+        certResolver: le
+
+  services:
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: http://jellyfin:8096
+
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        contentTypeNosniff: true
+        referrerPolicy: same-origin
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
