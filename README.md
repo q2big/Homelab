@@ -6,7 +6,7 @@ Every project has its own folder with a write-up of what it does and why each se
 
 ![Homelab](docs/homelab.png)
 
-All parts are 3d printed. Proxmox server on the right.
+All parts are 3d printed. Proxmox server on the right. Missing keystones couplers and more RAM :(
 
 ## Principles
 
