@@ -31,7 +31,3 @@ Synology DS925+ for file storage and backup, in its own Servers network.
 - Btrfs snapshots on all shared folders, **immutable** for 7 days (protection against ransomware and accidental deletion).
 - Frequent snapshots for documents, weekly for the backup folder.
 - Proxmox VM backups are stored on the NAS.
-
-## Planned
-
-- Off-site copy to an external drive or the cloud (3-2-1 backup).

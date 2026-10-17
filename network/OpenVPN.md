@@ -7,7 +7,7 @@ Remote access to the NAS through the OpenVPN server on the UCG-Fiber.
 - VPN clients get their own address pool and firewall zone.
 - The only thing they can reach internally is file sharing (SMB) on the NAS. The NAS admin interface and all other networks are blocked.
 - VPN clients cannot reach each other (client isolation).
-- The VPN port is open on the WAN, but there is no port forwarding to internal networks. Region blocking and IPS on the gateway apply to it.
+- The VPN port is open on the WAN, but there is no port forwarding to internal networks. Geo-IP filtering and IPS on the gateway apply to it.
 
 ## Users
 

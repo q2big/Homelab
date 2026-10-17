@@ -6,12 +6,12 @@ Zone-based firewall (UniFi ZBF) on the UCG-Fiber.
 
 - **Default deny between zones.** Custom zones block traffic to all other zones until a policy allows it.
 - **Least privilege.** Each zone gets only the specific services it needs.
-- **Minimal WAN exposure.** Only OpenVPN and the Minecraft port are open. The Minecraft port is forwarded to the game server VM in the DMZ, never to an internal network.
+- **Minimal WAN exposure.** Only services that must be public have an open port, and each one leads to an isolated zone, never to an internal network.
 - **Domain-filtered egress** for servers, so they can reach only the services they need (updates, time).
 
 ## Gateway security
 
-- **Region blocking:** inbound traffic is only allowed from Norway.
+- **Geo-IP filtering:** inbound traffic is limited to the regions that need access.
 - **Intrusion Prevention (IPS):** enabled on all networks.
 - **Encrypted DNS** on the gateway.
 

@@ -18,8 +18,8 @@ Game servers managed with [Pelican](https://pelican.dev/) (Panel and Wings) on t
 
 ## Internet exposure
 
-- Only the Minecraft port is forwarded from the WAN, to the Wings VM in the DMZ.
-- Region blocking on the gateway allows inbound traffic from Norway only.
+- Only the game port is forwarded, to the Wings VM in the DMZ.
+- Geo-IP filtering on the gateway limits where inbound traffic can come from.
 - Intrusion Prevention on the gateway inspects and blocks malicious traffic.
 - A compromised game server stays in the DMZ, with no route to internal networks.
 
@@ -28,8 +28,3 @@ Game servers managed with [Pelican](https://pelican.dev/) (Panel and Wings) on t
 | What | How |
 | --- | --- |
 | Game servers | Pelican backups every 2 hours, last 12 kept |
-| VMs | Nightly Proxmox backup to the NAS (being set up) |
-
-## Planned
-
-- Test a full restore from backup.

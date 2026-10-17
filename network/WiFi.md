@@ -8,7 +8,7 @@ Everyone on Wi-Fi gets minimal rights (internet only), except my own devices, wh
 
 ## How it works
 
-1. A device connects to the SSID and logs in with a username and password.
+1. A device connects to the SSID and authenticates.
 2. RADIUS returns the VLAN for that user (dynamic VLAN assignment).
 3. The AP places the client on that VLAN, and it gets an address from that network.
 4. The firewall zone for that network decides what the client can reach.
@@ -23,4 +23,3 @@ The AP itself stays on the management network and only carries the Wi-Fi VLANs t
 ## Planned
 
 - Guest and IoT SSIDs
-- Certificate-based authentication per device instead of shared users
