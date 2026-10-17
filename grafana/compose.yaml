@@ -1,0 +1,58 @@
+# InfluxDB 2 and Grafana for host metrics, on the SIEM VM.
+# Addresses and passwords come from .env.
+
+x-hardening: &hardening
+  restart: unless-stopped
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  influxdb:
+    <<: *hardening
+    image: influxdb:2.9.1
+    user: "1000:1000"
+    mem_limit: 1g
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:?}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_ADMIN_TOKEN:?}
+      DOCKER_INFLUXDB_INIT_ORG: homelab
+      DOCKER_INFLUXDB_INIT_BUCKET: proxmox
+      DOCKER_INFLUXDB_INIT_RETENTION: 90d
+      INFLUXD_TLS_CERT: /certs/metrics.crt
+      INFLUXD_TLS_KEY: /certs/influxdb.key
+      INFLUXD_REPORTING_DISABLED: "true"
+    ports:
+      - "${VM_IP:?}:8086:8086"
+    volumes:
+      - ./influxdb/data:/var/lib/influxdb2
+      - ./influxdb/config:/etc/influxdb2
+      - ./certs/metrics.crt:/certs/metrics.crt:ro
+      - ./certs/influxdb.key:/certs/influxdb.key:ro
+
+  grafana:
+    <<: *hardening
+    image: grafana/grafana:13.2.4
+    mem_limit: 512m
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?}
+      GF_SECURITY_COOKIE_SECURE: "true"
+      GF_SERVER_PROTOCOL: https
+      GF_SERVER_CERT_FILE: /certs/metrics.crt
+      GF_SERVER_CERT_KEY: /certs/grafana.key
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    ports:
+      - "${VM_IP:?}:3000:3000"
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - ./certs/metrics.crt:/certs/metrics.crt:ro
+      - ./certs/grafana.key:/certs/grafana.key:ro
+    depends_on: [influxdb]
